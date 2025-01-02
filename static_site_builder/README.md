@@ -1,4 +1,4 @@
-# Static Site Builder with AI
+# Static Site Builder with AI 🚀
 
 A web application that generates custom static websites using AI. Built with FastAPI and Crew AI, this tool allows users to create professional websites by simply describing their business and features.
 

@@ -19,13 +19,93 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(400px, 30%) 1fr;
             gap: 2rem;
             min-height: 100vh;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sites-list {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .sites-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .new-site-button {
+            background: #4a5568;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .new-site-button:hover {
+            background: #2d3748;
+        }
+
+        .sites-container {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .site-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .site-card:hover {
+            border-color: #4a5568;
+            background: #f7fafc;
+        }
+
+        .site-card.active {
+            border-color: #4a5568;
+            background: #f7fafc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .site-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .site-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
         }
 
         .form-section {
@@ -40,6 +120,20 @@
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .version-info {
+            font-size: 0.9rem;
+            color: #666;
         }
 
         h1 {
@@ -111,43 +205,112 @@
 </head>
 <body>
     <div class="container">
-        <div class="form-section">
-            <h1>Static Site Builder</h1>
-            <form id="siteForm" onsubmit="generateSite(event)">
-                <div class="form-group">
-                    <label for="business_type">Business Type</label>
-                    <input type="text" id="business_type" name="business_type" required
-                           placeholder="e.g., Restaurant, Tech Startup, Consulting Firm">
+        <div class="sidebar">
+            <div class="sites-list">
+                <div class="sites-header">
+                    <h2>Your Sites</h2>
+                    <button onclick="resetForm()" class="new-site-button">+ New Site</button>
                 </div>
-
-                <div class="form-group">
-                    <label for="key_features">Key Features/Services</label>
-                    <textarea id="key_features" name="key_features" required
-                              placeholder="List your main features or services, one per line"></textarea>
+                <div id="sitesList" class="sites-container">
+                    <!-- Sites will be loaded here -->
                 </div>
+            </div>
+            <div class="form-section">
+                <h1>Static Site Builder</h1>
+                <form id="siteForm" onsubmit="generateSite(event)">
+                    <input type="hidden" id="edit_site_id" name="edit_site_id" value="">
+                    <div class="form-group">
+                        <label for="business_type">Business Type</label>
+                        <input type="text" id="business_type" name="business_type" required
+                               placeholder="e.g., Restaurant, Tech Startup, Consulting Firm">
+                    </div>
 
-                <div class="form-group">
-                    <label for="style_preference">Style Preference</label>
-                    <select id="style_preference" name="style_preference" required>
-                        <option value="modern">Modern & Minimal</option>
-                        <option value="classic">Classic & Professional</option>
-                        <option value="bold">Bold & Creative</option>
-                        <option value="elegant">Elegant & Sophisticated</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label for="key_features">Key Features/Services</label>
+                        <textarea id="key_features" name="key_features" required
+                                  placeholder="List your main features or services, one per line"></textarea>
+                    </div>
 
-                <button type="submit">Generate Site</button>
-            </form>
+                    <div class="form-group">
+                        <label for="style_preference">Style Preference</label>
+                        <select id="style_preference" name="style_preference" required>
+                            <option value="modern">Modern & Minimal</option>
+                            <option value="classic">Classic & Professional</option>
+                            <option value="bold">Bold & Creative</option>
+                            <option value="elegant">Elegant & Sophisticated</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="generateButton">Generate New Site</button>
+                </form>
+            </div>
         </div>
 
         <div class="preview-section">
-            <h1>Preview</h1>
+            <div class="preview-header">
+                <h1>Preview</h1>
+                <div class="version-info" id="versionInfo"></div>
+            </div>
             <div id="loading" class="loading"></div>
             <iframe id="preview" class="preview-frame"></iframe>
         </div>
     </div>
 
     <script>
+        // Load sites on page load
+        window.addEventListener('load', loadSites);
+
+        async function loadSites() {
+            try {
+                const response = await fetch('/sites');
+                const data = await response.json();
+                const sitesList = document.getElementById('sitesList');
+                sitesList.innerHTML = '';
+
+                data.sites.forEach(site => {
+                    const latestVersion = site.versions[site.versions.length - 1];
+                    const card = document.createElement('div');
+                    card.className = 'site-card';
+                    card.dataset.siteId = site.id;
+                    card.innerHTML = `
+                        <h3>${site.business_type}</h3>
+                        <div class="site-meta">
+                            Created: ${new Date(site.created_at).toLocaleDateString()}
+                            <span class="version-badge">${site.versions.length} version${site.versions.length > 1 ? 's' : ''}</span>
+                        </div>
+                    `;
+                    card.onclick = () => loadSite(site);
+                    sitesList.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading sites:', error);
+            }
+        }
+
+        function loadSite(site) {
+            // Update form with latest version data
+            const latestVersion = site.versions[site.versions.length - 1];
+            document.getElementById('edit_site_id').value = site.id;
+            document.getElementById('business_type').value = latestVersion.parameters.business_type;
+            document.getElementById('key_features').value = latestVersion.parameters.key_features;
+            document.getElementById('style_preference').value = latestVersion.parameters.style_preference;
+
+            // Update button text
+            document.getElementById('generateButton').textContent = 'Create New Version';
+
+            // Update preview
+            document.getElementById('preview').src = `/previews/${latestVersion.file_path}`;
+            document.getElementById('preview').style.display = 'block';
+            
+            // Update version info
+            document.getElementById('versionInfo').textContent = `Version ${latestVersion.version} - ${new Date(latestVersion.created_at).toLocaleString()}`;
+
+            // Update active state
+            document.querySelectorAll('.site-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.siteId === site.id.toString());
+            });
+        }
+
         async function generateSite(event) {
             event.preventDefault();
             
@@ -157,10 +320,12 @@
             
             // Get form data
             const formData = new FormData(event.target);
+            const siteId = formData.get('edit_site_id');
             
             try {
                 // Send request to generate site
-                const response = await fetch('/generate', {
+                const url = siteId ? `/sites/${siteId}/versions` : '/generate';
+                const response = await fetch(url, {
                     method: 'POST',
                     body: formData
                 });
@@ -171,6 +336,14 @@
                     // Load preview
                     document.getElementById('preview').src = data.preview_url;
                     document.getElementById('preview').style.display = 'block';
+                    
+                    // Refresh sites list
+                    loadSites();
+
+                    // If this was a new version, update version info
+                    if (data.version) {
+                        document.getElementById('versionInfo').textContent = `Version ${data.version} - ${new Date().toLocaleString()}`;
+                    }
                 } else {
                     alert('Error generating site');
                 }
@@ -181,6 +354,17 @@
                 // Hide loading state
                 document.getElementById('loading').style.display = 'none';
             }
+        }
+
+        // Reset form when clicking "Generate New Site"
+        function resetForm() {
+            document.getElementById('siteForm').reset();
+            document.getElementById('edit_site_id').value = '';
+            document.getElementById('generateButton').textContent = 'Generate New Site';
+            document.getElementById('preview').src = '';
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('versionInfo').textContent = '';
+            document.querySelectorAll('.site-card').forEach(card => card.classList.remove('active'));
         }
     </script>
 </body>
