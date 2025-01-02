@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Site Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            min-height: 100vh;
+        }
+
+        .form-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .preview-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: #4a5568;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #2d3748;
+        }
+
+        .preview-frame {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading::after {
+            content: "⚙️ Generating your site...";
+            font-size: 1.2rem;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section">
+            <h1>Static Site Builder</h1>
+            <form id="siteForm" onsubmit="generateSite(event)">
+                <div class="form-group">
+                    <label for="business_type">Business Type</label>
+                    <input type="text" id="business_type" name="business_type" required
+                           placeholder="e.g., Restaurant, Tech Startup, Consulting Firm">
+                </div>
+
+                <div class="form-group">
+                    <label for="key_features">Key Features/Services</label>
+                    <textarea id="key_features" name="key_features" required
+                              placeholder="List your main features or services, one per line"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="style_preference">Style Preference</label>
+                    <select id="style_preference" name="style_preference" required>
+                        <option value="modern">Modern & Minimal</option>
+                        <option value="classic">Classic & Professional</option>
+                        <option value="bold">Bold & Creative</option>
+                        <option value="elegant">Elegant & Sophisticated</option>
+                    </select>
+                </div>
+
+                <button type="submit">Generate Site</button>
+            </form>
+        </div>
+
+        <div class="preview-section">
+            <h1>Preview</h1>
+            <div id="loading" class="loading"></div>
+            <iframe id="preview" class="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <script>
+        async function generateSite(event) {
+            event.preventDefault();
+            
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('preview').style.display = 'none';
+            
+            // Get form data
+            const formData = new FormData(event.target);
+            
+            try {
+                // Send request to generate site
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Load preview
+                    document.getElementById('preview').src = data.preview_url;
+                    document.getElementById('preview').style.display = 'block';
+                } else {
+                    alert('Error generating site');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating site');
+            } finally {
+                // Hide loading state
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
